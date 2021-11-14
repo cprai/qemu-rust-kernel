@@ -7,7 +7,8 @@ mod vga_buffer;
 
 
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
+    println!("{}", info);
     loop {}
 }
 
@@ -19,5 +20,5 @@ pub extern "C" fn _start() -> ! {
     }
     println!("Finished printing 100 lines.");
 
-    loop {}
+    panic!("Kernel ran out of code to execute");
 }
