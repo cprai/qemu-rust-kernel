@@ -137,11 +137,21 @@ impl fmt::Write for Writer {
 }
 
 
-pub fn print_something() {
-    use core::fmt::Write;
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => ($crate::vga_buffer::_print(format_args!($($arg)*)));
+}
 
-    WRITER.lock().write_byte(b'H');
-    WRITER.lock().write_string("ello, world!\n");
-    write!(WRITER.lock(), "The numbers are {} and {}.", 42, 1.0/3.0).unwrap();
-    WRITER.lock().write_string(" This text should trigger a newline because it overflows the vga buffer width.");
+
+#[macro_export]
+macro_rules! println {
+    () => ($crate::print!("\n"));
+    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+}
+
+
+#[doc(hidden)]
+pub fn _print(args: fmt::Arguments) {
+    use core::fmt::Write;
+    WRITER.lock().write_fmt(args).unwrap();
 }
