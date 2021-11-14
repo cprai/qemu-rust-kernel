@@ -1,9 +1,20 @@
 use core::fmt;
 use volatile::Volatile;
+use lazy_static::lazy_static;
+use spin::Mutex;
 
 
 const BUFFER_HEIGHT: usize = 25;
 const BUFFER_WIDTH: usize = 80;
+
+
+lazy_static! {
+    pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
+        column_position: 0,
+        color_code: ColorCode::new(Color::Yellow, Color::Black),
+        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
+    });
+}
 
 
 #[allow(dead_code)]
@@ -129,14 +140,8 @@ impl fmt::Write for Writer {
 pub fn print_something() {
     use core::fmt::Write;
 
-    let mut writer = Writer {
-        column_position: 0,
-        color_code: ColorCode::new(Color::Yellow, Color::Black),
-        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
-    };
-
-    writer.write_byte(b'H');
-    writer.write_string("ello, world!\n");
-    write!(writer, "The numbers are {} and {}.", 42, 1.0/3.0).unwrap();
-    writer.write_string(" This text should trigger a newline because it overflows the vga buffer width.");
+    WRITER.lock().write_byte(b'H');
+    WRITER.lock().write_string("ello, world!\n");
+    write!(WRITER.lock(), "The numbers are {} and {}.", 42, 1.0/3.0).unwrap();
+    WRITER.lock().write_string(" This text should trigger a newline because it overflows the vga buffer width.");
 }
